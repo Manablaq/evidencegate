@@ -1,0 +1,9 @@
+networks:
+  default: localnet
+  localnet: {}
+
+paths:
+  contracts: contracts
+  artifacts: artifacts
+
+environment: .env
