@@ -1,4 +1,5 @@
 import hashlib
+import importlib.metadata as metadata
 import json
 import os
 from enum import Enum
@@ -30,6 +31,13 @@ CONTRACT_PATH = Path("contracts/evidence_gate.py")
 EXPECTED_CONTRACT_SHA256 = (
     "719e83531ba38b87cce825d68788d64a0f2971336626201ce1ea2f0726b0f1b2"
 )
+EXPECTED_TOOLCHAIN = {
+    "genlayer-test": "0.29.2",
+    "genlayer-py": "0.16.3",
+    "pytest": "9.1.1",
+    "eth-utils": "6.0.0",
+}
+EXPECTED_VALIDATOR_COUNT = 5
 
 BASE_ISO = "2026-09-15T12:00:00Z"
 EXPIRED_ISO = "2026-09-15T14:00:00Z"
@@ -50,6 +58,18 @@ POSITIVE_BODY_A = "Authority A record: shipment 42 was delivered."
 POSITIVE_BODY_B = "Authority B record: shipment 42 was delivered."
 NEGATIVE_BODY_A = "Authority A record: shipment 42 was not delivered."
 NEGATIVE_BODY_B = "Authority B record: shipment 42 was not delivered."
+
+
+def _runtime_toolchain() -> dict[str, str]:
+    versions: dict[str, str] = {}
+    for package, expected in EXPECTED_TOOLCHAIN.items():
+        actual = metadata.version(package)
+        assert actual == expected, (
+            f"{package} version mismatch: "
+            f"{actual} != {expected}"
+        )
+        versions[package] = actual
+    return versions
 
 
 def _sha256_bytes(value: bytes) -> str:
@@ -224,14 +244,65 @@ def _persist_runtime_snapshot(
     return receipt_path, len(raw_exposed)
 
 
+def _consensus_summary(
+    receipt: dict[str, Any],
+) -> dict[str, Any]:
+    consensus = receipt.get("consensus_data")
+    assert isinstance(consensus, dict), receipt
+
+    validators = consensus.get("validators")
+    votes = consensus.get("votes")
+
+    assert isinstance(validators, list), consensus
+    assert len(validators) == EXPECTED_VALIDATOR_COUNT, validators
+    assert all(
+        isinstance(item, dict)
+        and item.get("mode") == "validator"
+        for item in validators
+    ), validators
+
+    assert isinstance(votes, dict), consensus
+    assert len(votes) == EXPECTED_VALIDATOR_COUNT, votes
+
+    normalized_votes = [
+        str(value).lower()
+        for value in votes.values()
+    ]
+    assert normalized_votes == [
+        "agree"
+    ] * EXPECTED_VALIDATOR_COUNT, votes
+
+    validator_votes = [
+        str(item.get("vote")).lower()
+        for item in validators
+    ]
+    assert validator_votes == [
+        "agree"
+    ] * EXPECTED_VALIDATOR_COUNT, validators
+
+    return {
+        "validator_count": len(validators),
+        "vote_count": len(votes),
+        "agree_count": sum(
+            value == "agree"
+            for value in normalized_votes
+        ),
+        "all_agree": all(
+            value == "agree"
+            for value in normalized_votes
+        ),
+    }
+
+
 def _assert_finalized_success(
     receipt: dict[str, Any],
-) -> None:
+) -> dict[str, Any]:
     assert (
         _status_name(receipt)
         == TransactionStatus.FINALIZED.value
     ), receipt
     assert tx_execution_succeeded(receipt), receipt
+    return _consensus_summary(receipt)
 
 
 def _sim_config(
@@ -366,7 +437,7 @@ def _final_receipt(
         )
     )
 
-    _assert_finalized_success(
+    consensus_summary = _assert_finalized_success(
         receipt
     )
 
@@ -382,6 +453,7 @@ def _final_receipt(
             "status": _status_name(receipt),
             "snapshot": snapshot_path.name,
             "raw_exposed_field_count": raw_count,
+            "consensus": consensus_summary,
         }
     )
 
@@ -718,6 +790,19 @@ def test_evidencegate_supported_runtime_finality(
         "utf-8"
     )
 
+    toolchain = _runtime_toolchain()
+    integration_test_sha256 = _sha256_bytes(
+        Path(__file__).read_bytes()
+    )
+    gltest_config_sha256 = _sha256_bytes(
+        Path("gltest.config.yaml").read_bytes()
+    )
+    requirements_sha256 = _sha256_bytes(
+        Path(
+            "requirements-supported-runtime.txt"
+        ).read_bytes()
+    )
+
     ledger: list[dict[str, Any]] = []
 
     _, base_config = (
@@ -980,6 +1065,32 @@ def test_evidencegate_supported_runtime_finality(
         account=owner,
         sim_config=base_config,
     )
+    assert positive_attestation["outcome"] == "YES"
+    assert (
+        positive_attestation["policy_fingerprint"]
+        == policy["fingerprint"]
+    )
+    assert (
+        positive_attestation["evidence_bundle_digest"]
+        == positive_bundle
+    )
+    assert int(positive_attestation["evidence_count"]) == 2
+    assert (
+        int(
+            positive_attestation[
+                "distinct_authority_count"
+            ]
+        )
+        == 2
+    )
+    assert (
+        int(
+            positive_attestation[
+                "distinct_origin_count"
+            ]
+        )
+        == 2
+    )
 
     assert (
         _final_read(
@@ -1103,6 +1214,32 @@ def test_evidencegate_supported_runtime_finality(
         args=[negative_request],
         account=owner,
         sim_config=base_config,
+    )
+    assert negative_attestation["outcome"] == "NO"
+    assert (
+        negative_attestation["policy_fingerprint"]
+        == policy["fingerprint"]
+    )
+    assert (
+        negative_attestation["evidence_bundle_digest"]
+        == negative_bundle
+    )
+    assert int(negative_attestation["evidence_count"]) == 2
+    assert (
+        int(
+            negative_attestation[
+                "distinct_authority_count"
+            ]
+        )
+        == 2
+    )
+    assert (
+        int(
+            negative_attestation[
+                "distinct_origin_count"
+            ]
+        )
+        == 2
     )
 
     # Repairable failure and repair with a newer evidence version.
@@ -1236,6 +1373,18 @@ def test_evidencegate_supported_runtime_finality(
         sim_config=base_config,
     )
 
+    repaired_open_state = _final_read(
+        gl_client,
+        contract_address=contract_address,
+        function_name="get_request",
+        args=[repair_request],
+        account=owner,
+        sim_config=base_config,
+    )
+    assert repaired_open_state["status"] == "OPEN"
+    assert int(repaired_open_state["repair_count"]) == 1
+    assert repaired_open_state["evidence_ids_csv"] == repaired_csv
+
     repaired_bundle = _bundle_digest(
         policy_id,
         repaired_csv,
@@ -1279,6 +1428,20 @@ def test_evidencegate_supported_runtime_finality(
         "YES",
         "",
     ]
+
+    repaired_attestation = _final_read(
+        gl_client,
+        contract_address=contract_address,
+        function_name="get_attestation",
+        args=[repair_request],
+        account=owner,
+        sim_config=base_config,
+    )
+    assert repaired_attestation["outcome"] == "YES"
+    assert (
+        repaired_attestation["evidence_bundle_digest"]
+        == repaired_bundle
+    )
 
     assert (
         _final_read(
@@ -1344,6 +1507,10 @@ def test_evidencegate_supported_runtime_finality(
         "run_id": run_id,
         "network": network_name,
         "contract_source_sha256": source_sha,
+        "integration_test_sha256": integration_test_sha256,
+        "gltest_config_sha256": gltest_config_sha256,
+        "requirements_sha256": requirements_sha256,
+        "toolchain": toolchain,
         "contract_address": contract_address,
         "policy_id": policy_id,
         "policy": policy,
@@ -1372,7 +1539,11 @@ def test_evidencegate_supported_runtime_finality(
             "waited_for_finalized_status": True,
             "write_resubmission_on_timeout": False,
             "raw_runtime_snapshot_before_harness_return_decode": True,
-            "mock_validator_count": 5,
+            "mock_validator_count": EXPECTED_VALIDATOR_COUNT,
+            "receipt_validator_count_asserted": True,
+            "receipt_vote_count_asserted": True,
+            "all_finalized_receipt_votes_agree": True,
+            "heterogeneous_mock_disagreement_claimed": False,
         },
     }
 
@@ -1384,5 +1555,20 @@ def test_evidencegate_supported_runtime_finality(
     assert len(ledger) >= 20
     assert all(
         tx["status"] == "FINALIZED"
+        for tx in ledger
+    )
+    assert all(
+        tx["consensus"]["validator_count"]
+        == EXPECTED_VALIDATOR_COUNT
+        for tx in ledger
+    )
+    assert all(
+        tx["consensus"]["vote_count"]
+        == EXPECTED_VALIDATOR_COUNT
+        for tx in ledger
+    )
+    assert all(
+        tx["consensus"]["all_agree"]
+        is True
         for tx in ledger
     )

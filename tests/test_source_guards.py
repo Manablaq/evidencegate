@@ -187,3 +187,7 @@ require(
 )
 
 print("EVIDENCEGATE_STAGE2_SOURCE_GUARDS=PASS")
+
+def test_source_guards_module_checks() -> None:
+    """Make this guard module directly collectible by pytest."""
+    assert True

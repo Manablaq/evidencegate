@@ -27,10 +27,18 @@ Until those gates pass, the repository must not claim Bradbury deployment/finali
 
 ## Supported-runtime harness
 
-The guarded Studio Mode harness is:
+The guarded localnet runtime harness is:
 
 - `tests/integration/test_evidencegate_supported_runtime.py`
 - `verification/run_supported_runtime.sh`
 - `docs/SUPPORTED_RUNTIME_V1.md`
+- `requirements-supported-runtime.txt`
+- `requirements-supported-runtime-lock.txt`
 
-The harness is source-bound and finality-strict, but its presence is not evidence that it has been executed. Network execution remains a separate explicitly authorized step.
+`gltest.config.yaml` places Gltest's disposable artifacts under `.gltest-artifacts/`, while EvidenceGate run evidence is preserved separately under `artifacts/evidencegate-supported-runtime/`.
+
+The harness is source-bound, toolchain-bound, finality-strict, `LATEST_FINAL`-strict, and asserts five validator receipts plus five agreeing votes for every finalized write.
+
+Direct Mode separately proves that the contract validator rejects a deliberately different independently derived consequential outcome. The pinned local supported runtime shares one deterministic mock set across validator executions, so the runtime layer does not falsely claim heterogeneous per-validator mock divergence.
+
+The presence of this harness is not evidence that it has been executed. GenLayer network execution remains a separate explicitly authorized step.
