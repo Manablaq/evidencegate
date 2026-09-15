@@ -131,3 +131,22 @@ EvidenceGate cannot make a malicious approved authority truthful. The policy tru
 LLM classification may fail to converge. EvidenceGate must prefer disagreement/rotation or repair over weakening exact consequential agreement.
 
 No deployment or Bradbury-finality claim is authorized by this audit.
+
+## Stage 5 compact-source hardening
+
+### EG-AUD-011 — partially configured policy state removed
+
+The Bradbury-size redesign replaces the multi-transaction policy-building sequence with one atomic `create_policy` call carrying the complete authority IDs, unique bound addresses, exact origins, outcomes, and numeric policy bounds. A failed creation stores no partial policy configuration.
+
+### EG-AUD-012 — URL fragments and aggregate evidence size
+
+Source URLs now reject fragments. In addition to the 65,536-byte per-source bound, the evaluator caps the aggregate fetched source bundle at 131,072 bytes and returns `SOURCE_BUNDLE_TOO_LARGE` as a repairable failure.
+
+### Compact certification evidence
+
+- Compact contract SHA-256: `776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5`.
+- Contract source size: 16,113 bytes.
+- Full compact Direct Mode regression: 28/28 tests passed twice.
+- Write-blocked Bradbury deployment estimate: 13,633,575 gas for 16,356 calldata bytes.
+- `eth_sendRawTransaction` was blocked by the local proxy; no deployment or transaction occurred.
+- Supported-runtime finality has not yet been rerun against the compact API and remains a release gate.

@@ -51,7 +51,7 @@ A policy binds:
 - maximum request lifetime; and
 - maximum evidence records per request.
 
-Authorities and outcomes are added canonically and incorporated into a deterministic policy fingerprint. Once sealed, policy trust assumptions are immutable.
+A policy is created atomically with canonically sorted authority IDs, exact authority addresses, publisher origins, and outcomes. Successful creation immediately stores the sealed policy fingerprint; there is no partially configured policy state to mutate later.
 
 ## Evidence
 
@@ -69,6 +69,8 @@ Each evidence record binds:
 - registration time.
 
 Registration is authority-authenticated: only the exact address bound to an approved authority ID may register or advance that authority's evidence lineage. Trust still depends on the sealed policy, provenance binding, and later source-body verification rather than on a URL/hash alone.
+
+Source URLs must remain under the exact policy-bound HTTPS origin and may not contain URL fragments. Authority origins must be canonical HTTPS DNS hostnames.
 
 A request can use only the latest registered version of an evidence lineage.
 
@@ -152,7 +154,7 @@ The resolved request is terminal, making the historical attestation immutable fo
 
 ## v1 bounds
 
-The implementation must cap authority count, outcome count, evidence count, question bytes, criteria bytes, fetched source bytes, evidence age, and request lifetime.
+The implementation must cap authority count, outcome count, evidence count, question bytes, criteria bytes, each fetched source body, the aggregate fetched source bundle, evidence age, and request lifetime.
 
 ## Explicit exclusions
 

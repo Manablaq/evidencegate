@@ -4,7 +4,7 @@ This document describes the first canonical implementation candidate for the fro
 
 ## Authority identity
 
-A policy authority is not only a label or URL. `add_policy_authority` binds all three of:
+A policy authority is not only a label or URL. Atomic `create_policy` binds all three of:
 
 - canonical authority ID;
 - exact GenLayer/EVM-style authority address; and
@@ -94,3 +94,11 @@ The implementation cannot prove that a policy-approved authority is truthful. Au
 LLM classification may fail to converge even when all validators evaluate the same exact source bytes. That failure must not be converted into an attestation; consensus disagreement/rotation is safer than a false result.
 
 No claim of supported-runtime or Bradbury finality is made until those later verification stages complete.
+
+## Compact atomic policy construction
+
+The Bradbury-feasibility redesign removes the mutable policy-building sequence. `create_policy` receives the complete bounded authority-ID, authority-address, publisher-origin, and outcome sets in one call, validates them, derives the policy fingerprint, and stores the policy atomically. This removes partially configured policy state while preserving the same trust bindings.
+
+The compact candidate keeps six public views and six public writes. It also rejects source-URL fragments and enforces both a 65,536-byte per-source limit and a 131,072-byte aggregate fetched-bundle limit.
+
+Certified compact source SHA-256: `776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5`. The source is 16,113 bytes. A write-blocked Bradbury dry-run measured 13,633,575 gas for deployment; the send method was blocked locally, so this is feasibility evidence, not a deployment/finality claim.

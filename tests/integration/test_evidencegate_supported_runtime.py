@@ -29,7 +29,7 @@ from gltest_cli.config.general import get_general_config
 
 CONTRACT_PATH = Path("contracts/evidence_gate.py")
 EXPECTED_CONTRACT_SHA256 = (
-    "719e83531ba38b87cce825d68788d64a0f2971336626201ce1ea2f0726b0f1b2"
+    "776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5"
 )
 EXPECTED_TOOLCHAIN = {
     "genlayer-test": "0.29.2",
@@ -577,6 +577,7 @@ def _decode_return_after_snapshot(
     return payload
 
 
+
 def _register_evidence(
     gl_client,
     artifact_root: Path,
@@ -592,20 +593,7 @@ def _register_evidence(
     body: str,
     base_config: SimConfig,
 ) -> dict[str, Any]:
-    evidence_id = _final_read(
-        gl_client,
-        contract_address=contract_address,
-        function_name="derive_evidence_id",
-        args=[
-            policy_id,
-            stable_id,
-            version,
-        ],
-        account=authority_account,
-        sim_config=base_config,
-    )
-
-    _final_write(
+    receipt = _final_write(
         gl_client,
         artifact_root,
         ledger,
@@ -631,6 +619,12 @@ def _register_evidence(
         sim_config=base_config,
     )
 
+    evidence_id = _decode_return_after_snapshot(
+        receipt
+    )
+    assert isinstance(evidence_id, str)
+    assert len(evidence_id) == 64
+
     stored = _final_read(
         gl_client,
         contract_address=contract_address,
@@ -651,6 +645,7 @@ def _register_evidence(
         "source_sha256": _sha256_text(body),
         "stored": stored,
     }
+
 
 
 def _create_request(
@@ -833,30 +828,34 @@ def test_evidencegate_supported_runtime_finality(
         )
     )
 
-    policy_id = _final_read(
-        gl_client,
-        contract_address=contract_address,
-        function_name="derive_policy_id",
-        args=[
-            owner.address,
-            POLICY_SLUG,
-            1,
-        ],
-        account=owner,
-        sim_config=base_config,
+    authority_ids_csv = "authority-a,authority-b"
+    authority_addresses_csv = ",".join(
+        (
+            str(authority_a.address),
+            str(authority_b.address),
+        )
     )
+    publisher_origins_csv = (
+        "https://alpha.example.com,"
+        "https://beta.example.com"
+    )
+    outcomes_csv = "NO,YES"
 
-    _final_write(
+    policy_receipt = _final_write(
         gl_client,
         artifact_root,
         ledger,
-        label="create-policy",
+        label="create-sealed-policy",
         contract_address=contract_address,
         function_name="create_policy",
         args=[
             POLICY_SLUG,
             1,
             CRITERIA,
+            authority_ids_csv,
+            authority_addresses_csv,
+            publisher_origins_csv,
+            outcomes_csv,
             2,
             2,
             2,
@@ -869,81 +868,11 @@ def test_evidencegate_supported_runtime_finality(
         sim_config=base_config,
     )
 
-    _final_write(
-        gl_client,
-        artifact_root,
-        ledger,
-        label="add-authority-a",
-        contract_address=contract_address,
-        function_name="add_policy_authority",
-        args=[
-            policy_id,
-            "authority-a",
-            authority_a.address,
-            "https://alpha.example.com",
-        ],
-        account=owner,
-        sim_config=base_config,
+    policy_id = _decode_return_after_snapshot(
+        policy_receipt
     )
-
-    _final_write(
-        gl_client,
-        artifact_root,
-        ledger,
-        label="add-authority-b",
-        contract_address=contract_address,
-        function_name="add_policy_authority",
-        args=[
-            policy_id,
-            "authority-b",
-            authority_b.address,
-            "https://beta.example.com",
-        ],
-        account=owner,
-        sim_config=base_config,
-    )
-
-    _final_write(
-        gl_client,
-        artifact_root,
-        ledger,
-        label="add-outcome-no",
-        contract_address=contract_address,
-        function_name="add_policy_outcome",
-        args=[
-            policy_id,
-            "NO",
-        ],
-        account=owner,
-        sim_config=base_config,
-    )
-
-    _final_write(
-        gl_client,
-        artifact_root,
-        ledger,
-        label="add-outcome-yes",
-        contract_address=contract_address,
-        function_name="add_policy_outcome",
-        args=[
-            policy_id,
-            "YES",
-        ],
-        account=owner,
-        sim_config=base_config,
-    )
-
-    _final_write(
-        gl_client,
-        artifact_root,
-        ledger,
-        label="seal-policy",
-        contract_address=contract_address,
-        function_name="seal_policy",
-        args=[policy_id],
-        account=owner,
-        sim_config=base_config,
-    )
+    assert isinstance(policy_id, str)
+    assert len(policy_id) == 64
 
     policy = _final_read(
         gl_client,
@@ -953,6 +882,8 @@ def test_evidencegate_supported_runtime_finality(
         account=owner,
         sim_config=base_config,
     )
+    assert policy["outcomes_csv"] == "NO,YES"
+    assert len(policy["fingerprint"]) == 64
 
     # Positive / approval path.
     positive_a = _register_evidence(
@@ -1539,6 +1470,8 @@ def test_evidencegate_supported_runtime_finality(
             "waited_for_finalized_status": True,
             "write_resubmission_on_timeout": False,
             "raw_runtime_snapshot_before_harness_return_decode": True,
+            "atomic_sealed_policy_creation": True,
+            "expected_finalized_transaction_count": 17,
             "mock_validator_count": EXPECTED_VALIDATOR_COUNT,
             "receipt_validator_count_asserted": True,
             "receipt_vote_count_asserted": True,
@@ -1552,7 +1485,7 @@ def test_evidencegate_supported_runtime_finality(
         manifest,
     )
 
-    assert len(ledger) >= 20
+    assert len(ledger) == 17
     assert all(
         tx["status"] == "FINALIZED"
         for tx in ledger

@@ -33,8 +33,9 @@ Deadlines are immutable and repair cannot extend them. Unresolved requests can e
 ## Authority-origin network boundary
 
 Authority origins must be canonical HTTPS DNS hostnames. Literal IPv4
-origins are rejected, as are malformed DNS labels. This reduces obvious
-internal-address/SSRF-style configuration mistakes, but DNS rebinding and
+origins are rejected, as are malformed DNS labels. Evidence source URLs must
+remain under the exact bound origin and URL fragments are rejected. This reduces
+obvious internal-address/SSRF-style configuration mistakes, but DNS rebinding and
 network-layer policy remain runtime/environment trust boundaries.
 
 ## Evidence validity horizon and attestation reuse
@@ -60,7 +61,7 @@ Digest binding proves the exact bytes evaluated; it does not prove those bytes a
 
 ## DoS bounds
 
-All collections and text/body sizes used in consensus are bounded.
+All collections and text/body sizes used in consensus are bounded. The compact candidate applies both a per-source body limit and a separate aggregate source-bundle limit so several individually valid responses cannot bypass the total consensus-input budget.
 
 ## Hidden mutation/value-transfer review
 

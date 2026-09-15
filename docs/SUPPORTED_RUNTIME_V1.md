@@ -10,7 +10,7 @@ The harness is bound to:
 
 ```text
 contracts/evidence_gate.py
-SHA-256 719e83531ba38b87cce825d68788d64a0f2971336626201ce1ea2f0726b0f1b2
+SHA-256 776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5
 ```
 
 The v1 supported-runtime harness is intentionally restricted to localnet. Bradbury deployment and Bradbury writes remain a later, separately authorized stage.
@@ -55,7 +55,7 @@ One deployment is reused to reduce state noise. Every state-changing operation w
 
 The integration workflow verifies:
 
-1. sealed policy setup with two distinct authority addresses and origins;
+1. atomic sealed-policy creation with two distinct authority addresses and origins;
 2. exact positive outcome `YES`;
 3. exact negative outcome `NO`;
 4. digest mismatch materialized as `REPAIR_REQUIRED`;
@@ -66,6 +66,8 @@ The integration workflow verifies:
 9. deadline-driven `EXPIRED`.
 
 The workflow also asserts exact attestation fields, evidence/diversity counts, repair count, and evidence-bundle bindings.
+
+For the compact API, a successful complete run is expected to contain exactly 17 finalized state-changing transactions including deployment. The policy is created and sealed in one transaction rather than a mutable setup sequence.
 
 ## Consensus evidence
 
