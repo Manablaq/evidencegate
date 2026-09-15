@@ -16,7 +16,7 @@ Maximum evidence age, minimum remaining validity, expiry, and request lifetime a
 
 ## Corroboration
 
-At least two evidence records, two distinct authorities, and two distinct origins are required.
+At least two evidence records, two distinct authority IDs bound to distinct authority addresses, and two distinct origins are required. This prevents one signing key from satisfying multiple authority slots under different labels.
 
 ## Exact consensus-to-consequence binding
 
@@ -29,6 +29,28 @@ Correctable evidence failures must enter `REPAIR_REQUIRED`. They must not be col
 ## Liveness
 
 Deadlines are immutable and repair cannot extend them. Unresolved requests can expire.
+
+## Authority-origin network boundary
+
+Authority origins must be canonical HTTPS DNS hostnames. Literal IPv4
+origins are rejected, as are malformed DNS labels. This reduces obvious
+internal-address/SSRF-style configuration mistakes, but DNS rebinding and
+network-layer policy remain runtime/environment trust boundaries.
+
+## Evidence validity horizon and attestation reuse
+
+The effective validity horizon is the earliest bound implied by source
+expiry, maximum evidence age, and minimum remaining validity. Requests
+cannot be created or repaired with a deadline at or beyond that horizon.
+
+A resolved attestation is immutable historical evidence, not an eternal
+"currently valid" flag. `is_attestation_current()` rechecks the exact
+bound evidence bundle against latest registered lineage versions and
+current policy freshness before downstream consequential reuse.
+
+## HTTP transport result
+
+Only HTTP status `200` is eligible for evidence evaluation. Non-200 responses are repairable failures and cannot create attestations.
 
 ## Prompt injection
 

@@ -10,7 +10,7 @@ A policy authority is not only a label or URL. `add_policy_authority` binds all 
 - exact GenLayer/EVM-style authority address; and
 - exact canonical HTTPS publisher origin.
 
-Only that bound authority address may register or advance evidence for its authority ID.
+Only that bound authority address may register or advance evidence for its authority ID. A policy cannot bind two authority IDs to the same authority address.
 
 This closes the evidence-lineage spoofing problem that would exist if an arbitrary caller could publish a higher evidence version under a trusted authority label.
 
@@ -32,12 +32,13 @@ The implementation uses `gl.vm.run_nondet_unsafe`.
 The leader and each validator independently execute the same bounded evaluator:
 
 1. fetch each exact source URL;
-2. cap the body size;
-3. SHA-256 the raw body;
-4. require equality with the authority-registered digest;
-5. decode UTF-8;
-6. evaluate the question against the sealed criteria with `response_format="json"`; and
-7. return only bounded decision fields.
+2. require HTTP status `200`;
+3. cap the body size;
+4. SHA-256 the raw body;
+5. require equality with the authority-registered digest;
+6. decode UTF-8;
+7. evaluate the question against the sealed criteria with `response_format="json"`; and
+8. return only bounded decision fields.
 
 Validators exactly compare:
 
@@ -47,6 +48,36 @@ Validators exactly compare:
 - `bundle_digest`.
 
 No reasoning prose is persisted or compared.
+
+## Web transport compatibility
+
+Status-bearing fetches use `gl.nondet.web.request(url, method="GET")`.
+The convenience `web.get()` path is not used when the contract needs
+`response.status`.
+
+The fetch exception boundary covers the transport call only. Response
+inspection is intentionally outside that catch so an SDK/runtime API
+mismatch cannot be silently mislabeled as `SOURCE_FETCH_FAILED`.
+
+The request question is JSON-quoted and explicitly treated as untrusted
+data in the evaluator prompt. Evidence bodies remain untrusted data as
+well; only the sealed policy criteria govern evaluation.
+
+## Effective validity and reusable attestation safety
+
+`valid_until` is the earliest exclusive timestamp implied by all three
+policy constraints: evidence expiry, maximum evidence age, and minimum
+remaining validity. This prevents a request deadline from extending past
+the point where evidence would already violate its sealed policy.
+
+Historical attestations remain queryable. For live consequential use,
+callers must use `is_attestation_current(request_id)`, which rejects
+attestations after evidence supersession or any current freshness/validity
+failure.
+
+LLM JSON is required to contain exactly the four decision-bearing fields
+`kind`, `outcome`, `failure_code`, and `bundle_digest`; extra fields are
+rejected.
 
 ## Deterministic state boundary
 

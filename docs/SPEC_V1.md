@@ -40,7 +40,7 @@ A policy binds:
 - creator/owner;
 - stable slug and version;
 - bounded natural-language evaluation criteria;
-- approved authority IDs;
+- approved authority IDs, each bound to a unique authority address within the policy;
 - one exact HTTPS publisher origin per authority;
 - finite uppercase outcome codes;
 - minimum evidence records;
@@ -68,13 +68,13 @@ Each evidence record binds:
 - expiry time; and
 - registration time.
 
-Registration may be permissionless because trust does not come from the submitter. Trust comes from the sealed policy binding plus later source-body verification.
+Registration is authority-authenticated: only the exact address bound to an approved authority ID may register or advance that authority's evidence lineage. Trust still depends on the sealed policy, provenance binding, and later source-body verification rather than on a URL/hash alone.
 
 A request can use only the latest registered version of an evidence lineage.
 
 ## Corroboration
 
-Every policy requires at least two evidence records, two distinct authorities, and two distinct origins. A single publisher duplicated under multiple URLs cannot satisfy the independence requirement.
+Every policy requires at least two evidence records, two distinct authority IDs backed by distinct authority addresses, and two distinct origins. One signing address or publisher duplicated under multiple labels/URLs cannot satisfy the mechanical independence requirement.
 
 ## Request
 
@@ -89,18 +89,19 @@ A request binds:
 - creation time; and
 - immutable deadline.
 
-At creation or repair, evidence must remain valid beyond the request deadline.
+At creation or repair, the bundle's effective policy-valid horizon must extend beyond the request deadline. That horizon is the earliest point at which expiry, maximum evidence age, or minimum remaining-validity requirements would cease to hold.
 
 ## Consensus
 
 Leader and validators independently:
 
 1. fetch every registered source URL;
-2. bound the response body size;
-3. SHA-256 the exact fetched bytes;
-4. require the digest to match the registered digest;
-5. evaluate only those verified bytes under the sealed policy criteria; and
-6. return a bounded structured result.
+2. require HTTP status `200`;
+3. bound the response body size;
+4. SHA-256 the exact fetched bytes;
+5. require the digest to match the registered digest;
+6. evaluate only those verified bytes under the sealed policy criteria; and
+7. return a bounded structured result.
 
 Decision-bearing fields are compared exactly. At minimum:
 
@@ -147,7 +148,7 @@ A successful resolution stores at least:
 - resolution time; and
 - validity bound inherited from the evidence bundle.
 
-The resolved request is terminal, making the attestation immutable for that request.
+The resolved request is terminal, making the historical attestation immutable for that request. Consequential consumers must additionally call `is_attestation_current(request_id)`: a later evidence-lineage version or any freshness/validity failure makes the historical attestation non-current even though the record remains queryable.
 
 ## v1 bounds
 
