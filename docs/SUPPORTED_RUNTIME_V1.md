@@ -13,7 +13,7 @@ contracts/evidence_gate.py
 SHA-256 6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1
 ```
 
-The v1 supported-runtime harness is intentionally restricted to isolated localnet. Any Bradbury write for the current fixed source requires a separate explicit authorization. Historical Bradbury activity for the predecessor source is not deployment or finality evidence for this source.
+The v1 supported-runtime harness is intentionally restricted to isolated localnet. Bradbury live-network verification is a separate layer documented in `BRADBURY_LIVE_PROOF_V1.md`; its writes were separately authorized and are not part of the supported-runtime harness. Historical Bradbury activity for the predecessor source is not deployment or finality evidence for this source.
 
 ## Reproducible toolchain
 
@@ -168,4 +168,4 @@ A successful authorized run writes a manifest binding:
 - transaction hashes and finality states; and
 - per-transaction validator/vote counts.
 
-`artifacts/` remains gitignored. A later stage will normalize suitable non-secret evidence for append-only publication under `verification/`.
+`artifacts/` remains gitignored. Reviewer-facing non-secret Bradbury live-proof identifiers are documented in `BRADBURY_LIVE_PROOF_V1.md`; runtime artifacts remain local and are not represented as public Bradbury evidence.
