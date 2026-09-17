@@ -1,6 +1,6 @@
 # EvidenceGate v1 supported-runtime verification
 
-Status: **the current fixed source passed isolated five-validator supported-runtime validation in R22-R10; the guarded self-contained runner still requires one clean-tree authorized execution before its artifacts are treated as canonical reproducibility evidence**.
+Status: **the current fixed source passed the exact committed clean-tree supported-runtime reproduction in R22-R19 with five validators and finalized consensus; R22-R20R then passed the reviewer-style audit with no implementation defect found**.
 
 This layer exists to prove properties that Direct Mode cannot prove: GenVM execution through the local GenLayer RPC path, multi-validator consensus execution, transaction finalization, and durable `LATEST_FINAL` state reads.
 
@@ -136,6 +136,24 @@ GLSim compatibility shim SHA-256: 595e4802b04c18e88a23a957d12d7d97dda38181cbfef2
 R22-R16 then re-certified the same source in Direct Mode: the source-security guard passed and the full Direct Mode regression passed 28/28. Neither R22-R16 nor its source guard submitted a GenLayer network transaction.
 
 Because R22-R15 necessarily adapted only the runner's clean-tree guard while the candidate was still uncommitted, one execution of the exact committed canonical runner from a clean tree remains the final reproducibility gate. The temporary runner adaptation did not change the contract, integration harness, toolchain bindings, simulator configuration, consensus logic, or transaction behavior.
+
+## Canonical clean-tree execution
+
+R22-R19 executed the exact committed `verification/run_supported_runtime.sh` unchanged from canonical commit `03f7ceb20667f71c901e27940217ce4e9ab0f3a8`. The repository was clean before and after execution. The isolated run used localnet chain ID 61999 with five validators, produced 17 finalized writes and 37 evidence files, and submitted no Bradbury transaction.
+
+The canonical evidence identities are:
+
+```text
+run id: r22-r19-canonical-clean-tree
+manifest SHA-256: e8aba5d2abc6595b815aaa8220d4d9971cad9f6bb5a66b219401358709af2a8e
+runner-runtime SHA-256: 1ed995e331a82924e8af66923c9c52edaf91dbcfbbf79fce4921e7d497000a16
+GLSim log SHA-256: 1dcd1b6e1f4b251bf80da99ff3717cabcbc0f4eec235b12f57bb3fa4017300a2
+contract SHA-256: 6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1
+integration-test SHA-256: 71a34d8c258292d30f445a303d77a37d6f5aeeeb01ed0d6c6b63a5e17b98cda0
+runner SHA-256: 5e1fcbdd3da642c0630111f376167e3736abbfecc0e10293bb35bdcbf49bf36e
+```
+
+R22-R20R independently rechecked the committed contract surface, provenance/versioning/freshness controls, repair and expiry semantics, nondeterministic isolation, exact validator comparison of consequential fields, finalized artifact evidence, and raw-before-decode snapshots. It found no implementation defect. It explicitly does not claim that on-chain checks can prove a policy-approved authority is truthful or that distinct authority addresses and publisher origins are controlled by independent real-world organizations.
 
 ## Evidence manifest
 
