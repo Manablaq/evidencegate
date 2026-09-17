@@ -1,6 +1,6 @@
 # EvidenceGate v1 implementation notes
 
-This document describes the first canonical implementation candidate for the frozen v1 specification.
+This document records the design decisions and hardening history of the canonical fixed v1 implementation. Current live-network deployment and finality evidence is documented separately in `BRADBURY_LIVE_PROOF_V1.md`.
 
 ## Authority identity
 
@@ -93,7 +93,7 @@ The implementation cannot prove that a policy-approved authority is truthful. Au
 
 LLM classification may fail to converge even when all validators evaluate the same exact source bytes. That failure must not be converted into an attestation; consensus disagreement/rotation is safer than a false result.
 
-The current fixed source has passed isolated supported-runtime finality validation through the five-validator local simulator path. No Bradbury deployment or finality claim is made for the current fixed source. Historical Bradbury activity belongs to a predecessor source and does not certify this candidate.
+The current fixed source passed isolated supported-runtime finality validation through the five-validator local simulator path and was subsequently deployed and finalized on Bradbury. The canonical live-network evidence is documented in `BRADBURY_LIVE_PROOF_V1.md`. Historical Bradbury activity for predecessor sources remains historical only and is not used to certify this fixed source.
 
 ## Compact atomic policy construction
 
@@ -101,4 +101,4 @@ The Bradbury-feasibility redesign removes the mutable policy-building sequence. 
 
 The compact candidate keeps six public views and six public writes. It also rejects source-URL fragments and enforces both a 65,536-byte per-source limit and a 131,072-byte aggregate fetched-bundle limit.
 
-Current fixed compact source SHA-256: `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1`. The source is 16181 bytes. The GenVM runtime fix copies the request question, policy criteria, and allowed outcomes into ordinary memory before the nondeterministic leader closure so that the nondeterministic path does not read contract storage. Isolated five-validator supported-runtime validation R22-R10 passed against this source. The earlier Bradbury dry-run and later predecessor deployment evidence are historical evidence for the predecessor source only and are not reused as deployment/finality certification for this candidate.
+Canonical fixed compact source SHA-256: `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1`. The source is 16181 bytes. The GenVM runtime fix copies the request question, policy criteria, and allowed outcomes into ordinary memory before the nondeterministic leader closure so that the nondeterministic path does not read contract storage. Isolated five-validator supported-runtime validation R22-R10 passed against this source. The earlier Bradbury dry-run and predecessor deployment evidence remain historical evidence for predecessor source versions and are not reused as deployment/finality certification for this fixed source. The later canonical Bradbury deployment and finality record is documented in `BRADBURY_LIVE_PROOF_V1.md`.

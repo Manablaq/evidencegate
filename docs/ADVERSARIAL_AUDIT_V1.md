@@ -1,6 +1,6 @@
 # EvidenceGate v1 adversarial audit — Stage 3
 
-Status: pre-deployment implementation audit.
+Status: **historical pre-deployment implementation audit.** This document preserves the findings and fixes from that phase; current canonical deployment and finality evidence is documented separately in `BRADBURY_LIVE_PROOF_V1.md`.
 
 ## Findings fixed
 
@@ -124,13 +124,13 @@ The Stage 3 suite covers policy immutability and authorization, sorted authority
 
 ## Remaining trust boundaries
 
-Direct Mode is in-memory verification. It does not prove live multi-validator finality or Bradbury network behavior.
+Direct Mode is in-memory verification and, by itself, does not prove live multi-validator finality or Bradbury network behavior. The later supported-runtime and Bradbury proofs are separate verification layers.
 
 EvidenceGate cannot make a malicious approved authority truthful. The policy trust choice is explicit and sealed.
 
 LLM classification may fail to converge. EvidenceGate must prefer disagreement/rotation or repair over weakening exact consequential agreement.
 
-No deployment or Bradbury-finality claim is authorized by this audit.
+This historical audit does not itself make a deployment or Bradbury-finality claim; the later canonical live proof is the authoritative record for those claims.
 
 ## Stage 5 compact-source hardening
 
@@ -150,6 +150,6 @@ The certification evidence in this subsection is bound to the predecessor source
 - Historical predecessor source size: 16,113 bytes.
 - Full predecessor Direct Mode regression: 28/28 tests passed twice.
 - At the time of this audit, the write-blocked Bradbury deployment estimate was 13,633,575 gas for 16,356 calldata bytes and no deployment transaction was submitted by that audit step.
-- The current fixed candidate SHA-256 is `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1`.
-- R22-R10 subsequently completed isolated five-validator supported-runtime finality validation against the fixed candidate after the nondeterministic-storage hardening.
-- Reviewer-style audit R22-R20R subsequently passed against the committed fixed candidate with no implementation defect found. This document retains the predecessor audit evidence above as historical evidence rather than relabeling it as evidence for the fixed source.
+- The canonical fixed source SHA-256 is `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1`.
+- R22-R10 subsequently completed isolated five-validator supported-runtime finality validation against the fixed source after the nondeterministic-storage hardening.
+- Reviewer-style audit R22-R20R subsequently passed against the committed fixed source with no implementation defect found. This document retains the predecessor audit evidence above as historical evidence rather than relabeling it as evidence for the fixed source.

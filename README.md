@@ -31,7 +31,21 @@ EvidenceGate v1 is intentionally contract-first:
 9. Independent reviewer-style audit.
 10. Deploy the exact fixed source to Bradbury only after the earlier gates pass, then verify policy creation, two-authority evidence registration, request creation, resolution, validator agreement, and network finality.
 
-See `docs/SPEC_V1.md`, `docs/SUPPORTED_RUNTIME_V1.md`, and `docs/BRADBURY_LIVE_PROOF_V1.md`.
+## Documentation
+
+For a reviewer, the shortest path through the repository is:
+
+1. `docs/BRADBURY_LIVE_PROOF_V1.md` — canonical deployment, policy/evidence/request identifiers, network finality, validator consensus, and trust-boundary evidence.
+2. `docs/SUPPORTED_RUNTIME_V1.md` — reproducible five-validator supported-runtime verification, including positive and negative outcomes, repair, expiry, raw-response preservation, and finalized reads.
+3. `docs/SECURITY_V1.md` — provenance, freshness, corroboration, liveness, prompt-injection, and attestation-currentness boundaries.
+
+The remaining design and reference documents are:
+
+- `docs/SPEC_V1.md` — normative v1 behavior and explicit exclusions.
+- `docs/CONSENSUS_V1.md` — leader/validator execution and exact consequential comparison.
+- `docs/IMPLEMENTATION_V1.md` — implementation decisions and fixed-source hardening history.
+- `docs/ADVERSARIAL_AUDIT_V1.md` — historical adversarial findings and the fixes incorporated before the canonical release.
+- `verification/README.md` — verification ladder and reproducibility evidence.
 
 ## Current fixed compact v1
 

@@ -2,7 +2,9 @@
 
 No verification layer may claim properties that belong to another layer.
 
-Required before Bradbury deployment:
+## Release verification ladder
+
+The canonical v1 release followed this ladder before Bradbury deployment:
 
 1. Python syntax/source guards.
 2. GenVM lint and typecheck.
@@ -39,7 +41,7 @@ The guarded localnet runtime harness is:
 
 The harness is source-bound, toolchain-bound, finality-strict, `LATEST_FINAL`-strict, and asserts five validator receipts plus five agreeing votes for every finalized write.
 
-The harness is now bound to the fixed compact contract SHA-256 `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1` and its atomic sealed-policy API. R22-R10 completed an isolated five-validator supported-runtime validation of this fixed source, covering finalized positive and negative outcomes, repair/re-resolution, and expiry. The self-contained guarded runner has been prepared to reproduce that environment from the exact lockfile; its clean-tree execution and artifact publication remain a separate release step.
+The harness is bound to the fixed compact contract SHA-256 `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1` and its atomic sealed-policy API. R22-R10 completed an isolated five-validator supported-runtime validation of this fixed source, covering finalized positive and negative outcomes, repair/re-resolution, and expiry. The self-contained guarded runner reproduces that environment from the exact lockfile, and canonical clean-tree execution plus artifact capture completed in R22-R19.
 
 The guarded runner starts an isolated GLSim instance rather than depending on the external port-4000 Studio service. Its simulator-only compatibility shim normalizes GenLayer `Address` wrappers in GLSim read results before SDK calldata encoding; it does not change EvidenceGate contract code or validator consensus logic.
 
@@ -51,4 +53,4 @@ Reviewer-style audit R22-R20R then passed without finding an implementation defe
 
 Direct Mode separately proves that the contract validator rejects a deliberately different independently derived consequential outcome. The pinned local supported runtime shares one deterministic mock set across validator executions, so the runtime layer does not falsely claim heterogeneous per-validator mock divergence.
 
-The presence of this harness is not evidence that it has been executed. GenLayer network execution remains a separate explicitly authorized step.
+The harness source alone is not evidence of execution; the canonical R22-R19 run identities above provide the reproducibility record for the supported-runtime layer. Bradbury live-network verification is a separate layer documented in `docs/BRADBURY_LIVE_PROOF_V1.md`, and neither layer substitutes for the other.
