@@ -29,7 +29,7 @@ from gltest_cli.config.general import get_general_config
 
 CONTRACT_PATH = Path("contracts/evidence_gate.py")
 EXPECTED_CONTRACT_SHA256 = (
-    "776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5"
+    "6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1"
 )
 EXPECTED_TOOLCHAIN = {
     "genlayer-test": "0.29.2",

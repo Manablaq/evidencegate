@@ -1,6 +1,6 @@
 # EvidenceGate v1 supported-runtime verification
 
-Status: **harness prepared and statically reviewed; execution still requires explicit authorization**.
+Status: **the current fixed source passed isolated five-validator supported-runtime validation in R22-R10; the guarded self-contained runner still requires one clean-tree authorized execution before its artifacts are treated as canonical reproducibility evidence**.
 
 This layer exists to prove properties that Direct Mode cannot prove: GenVM execution through the local GenLayer RPC path, multi-validator consensus execution, transaction finalization, and durable `LATEST_FINAL` state reads.
 
@@ -10,14 +10,14 @@ The harness is bound to:
 
 ```text
 contracts/evidence_gate.py
-SHA-256 776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5
+SHA-256 6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1
 ```
 
-The v1 supported-runtime harness is intentionally restricted to localnet. Bradbury deployment and Bradbury writes remain a later, separately authorized stage.
+The v1 supported-runtime harness is intentionally restricted to isolated localnet. Any Bradbury write for the current fixed source requires a separate explicit authorization. Historical Bradbury activity for the predecessor source is not deployment or finality evidence for this source.
 
 ## Reproducible toolchain
 
-The harness uses a repository-local `.venv`, not another project's environment.
+The guarded runner creates a disposable Python 3.12 virtual environment from the exact repository lockfile rather than depending on another project's environment or the developer's existing `.venv`.
 
 Top-level supported-runtime dependencies are pinned in:
 
@@ -31,7 +31,15 @@ The complete resolved environment is frozen in:
 requirements-supported-runtime-lock.txt
 ```
 
-The execution runner verifies Python 3.12 and the exact required versions of `genlayer-test`, `genlayer-py`, `pytest`, and `eth-utils` before any GenLayer network preflight.
+The execution runner verifies the exact locked runtime, including `genlayer-test`, `genlayer-py`, `pytest`, `eth-utils`, the simulator extra dependencies, and the explicitly pinned NumPy runtime before starting its isolated GLSim instance.
+
+## GLSim compatibility boundary
+
+The pinned `genlayer-test` 0.29.2 simulator supports the two-parameter `eth_sendRawTransaction` form used by `genlayer-py` 0.16.3. Its published simulator environment requires the simulator extra dependencies and NumPy; those are now included in the supported-runtime requirements and exact lock.
+
+R22-R10 also identified a simulator-only read-result codec limitation: GLSim cannot directly encode a GenLayer `Address` wrapper nested in a returned dataclass on the `gen_call` path. The successful isolated validation normalized only those simulator return wrappers before SDK calldata encoding. The guarded runner reproduces that boundary with a temporary `sitecustomize.py` shim inside its disposable environment. The contract source and consensus harness are not patched by that shim.
+
+The runner starts its own isolated GLSim instance on port 4011 by default, chain ID 61999, with five validators and three maximum rotations. It does not depend on the separately running Studio/Docker service on port 4000.
 
 ## Runtime artifact isolation
 
@@ -102,11 +110,32 @@ Each write is submitted exactly once and then the same transaction hash is polle
 - clean build branch;
 - exact contract SHA-256;
 - exact integration-test/config/requirements/lock identities;
-- repository-local toolchain versions;
-- local GenLayer RPC reachability; and
-- an RPC chain ID exactly matching the pinned `genlayer-py` `localnet` chain object.
+- required host tools;
+- an exact disposable Python 3.12 environment recreated from the lockfile;
+- the temporary GLSim compatibility shim with a local round-trip proof;
+- availability of the isolated GLSim port;
+- an isolated chain ID of 61999; and
+- five configured validators.
 
 Preparing, reviewing, or committing this harness does **not** authorize GenLayer network writes.
+
+## Verified precommit execution
+
+R22-R15 reproduced the current fixed source through the self-contained isolated localnet path with five validators and finality. The run used chain ID 61999 and produced 37 local evidence files. It submitted no Bradbury transaction.
+
+The precommit run is bound by:
+
+```text
+run id: r22-r15-precommit-self-contained
+manifest SHA-256: 319fb36e0dcb5c2b05dc6a31a3190895368e66e9291941c6129e21642fc32f22
+runner-runtime SHA-256: 915d1a69093ba83db34f97a6a9a463987355f2f1a73b71847befbfdff9c33621
+GLSim log SHA-256: 95cb6efc24eed1443cd910422e5d34d1c068b35a6117f28b621b3699d81be729
+GLSim compatibility shim SHA-256: 595e4802b04c18e88a23a957d12d7d97dda38181cbfef2f8f47439973f800bd7
+```
+
+R22-R16 then re-certified the same source in Direct Mode: the source-security guard passed and the full Direct Mode regression passed 28/28. Neither R22-R16 nor its source guard submitted a GenLayer network transaction.
+
+Because R22-R15 necessarily adapted only the runner's clean-tree guard while the candidate was still uncommitted, one execution of the exact committed canonical runner from a clean tree remains the final reproducibility gate. The temporary runner adaptation did not change the contract, integration harness, toolchain bindings, simulator configuration, consensus logic, or transaction behavior.
 
 ## Evidence manifest
 

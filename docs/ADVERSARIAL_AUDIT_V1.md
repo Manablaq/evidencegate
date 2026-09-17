@@ -142,11 +142,14 @@ The Bradbury-size redesign replaces the multi-transaction policy-building sequen
 
 Source URLs now reject fragments. In addition to the 65,536-byte per-source bound, the evaluator caps the aggregate fetched source bundle at 131,072 bytes and returns `SOURCE_BUNDLE_TOO_LARGE` as a repairable failure.
 
-### Compact certification evidence
+### Historical predecessor certification evidence
 
-- Compact contract SHA-256: `776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5`.
-- Contract source size: 16,113 bytes.
-- Full compact Direct Mode regression: 28/28 tests passed twice.
-- Write-blocked Bradbury deployment estimate: 13,633,575 gas for 16,356 calldata bytes.
-- `eth_sendRawTransaction` was blocked by the local proxy; no deployment or transaction occurred.
-- Supported-runtime finality has not yet been rerun against the compact API and remains a release gate.
+The certification evidence in this subsection is bound to the predecessor source and must not be presented as an audit of the current fixed candidate.
+
+- Historical predecessor compact contract SHA-256: `776dcd2ce4b0e6844d184831efe4b3e2b9b46eab2116d975bcf2f670b57562e5`.
+- Historical predecessor source size: 16,113 bytes.
+- Full predecessor Direct Mode regression: 28/28 tests passed twice.
+- At the time of this audit, the write-blocked Bradbury deployment estimate was 13,633,575 gas for 16,356 calldata bytes and no deployment transaction was submitted by that audit step.
+- The current fixed candidate SHA-256 is `6b5c31c786f3b8af0df559ae831b93083dbbe4ee23552a40c268edf633f80ad1`.
+- R22-R10 subsequently completed isolated five-validator supported-runtime finality validation against the fixed candidate after the nondeterministic-storage hardening.
+- This adversarial audit has not been rerun against the fixed candidate; an independent reviewer-style audit of the fixed source remains a release gate.
