@@ -33,6 +33,10 @@ EvidenceGate v1 is intentionally contract-first:
 
 ## Documentation
 
+Developer portal: https://evidencegate-docs.vercel.app
+
+The developer portal is maintained separately from this contract repository and provides integration, API, security, consensus, deployment, and reuse documentation.
+
 For a reviewer, the shortest path through the repository is:
 
 1. `docs/BRADBURY_LIVE_PROOF_V1.md` — canonical deployment, policy/evidence/request identifiers, network finality, validator consensus, and trust-boundary evidence.
